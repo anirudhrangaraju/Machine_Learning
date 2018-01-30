@@ -1,0 +1,283 @@
+---
+title: "Student_Result_Prediction_DecisionTree_Algorithm"
+author: "Anirudh R N"
+date: "25 January 2018"
+output: slidy_presentation
+---
+
+
+#1)Package Used
+
+```{r}
+#install.packages("markdown")
+#install.packages("DT")
+#install.packages("ggplot")
+#install.packages("c50")
+#install.packages("rpart")
+#install.packages("randomForest")
+#install.packages("caret")
+#install.packages("Fselector)
+#install.packages("grid")
+#install.packages("libcoin")
+#install.packages("mvtnorm")
+#install.packages("rpart")
+#install.packages("gmodels")
+```
+
+############################################################################################################
+
+#2)Data Setup
+
+Read the Data Set by URL:
+```{r}
+temp <- tempfile()
+download.file("http://archive.ics.uci.edu/ml/machine-learning-databases/00356/student.zip",temp,mode = "wb")
+unzip(temp,"student-mat.csv")
+
+```
+
+
+View the Data:
+```{r}
+studentDataSet <- read.csv("student-mat.csv",sep = ";",header = T)
+unlink(temp)
+```
+
+```{r}
+library(DT)
+datatable(head(studentDataSet))
+```
+
+```{r}
+str(studentDataSet)
+```
+
+Summary of the student Data Set:
+```{r}
+summary(studentDataSet)
+```
+
+```{r}
+library(ggplot2)
+hist(studentDataSet$G3)
+```
+
+############################################################################################################
+
+#3)Feature Engneering
+>>Selecton of features in the data set to improve machine Learning Results.
+>>We can  modify/create new one by combining multiple different variables comes under feature Engineering
+>>Intriducing new feature to predict PASS or FAIL
+
+```{r}
+studentDataSet$finalGrade <- NULL
+studentDataSet$finalGrade <- factor(ifelse(studentDataSet$G3>=median(studentDataSet$G3), 1, 0),labels = c("pass","fail"))
+```
+
+
+>>Feature Selection using information gain in R
+
+
+>>syntax:
+>>best_feature <- information.gain(formulae,data)
+```{r}
+library(FSelector)
+best_feature <- information.gain(finalGrade ~ .,studentDataSet)
+print(best_feature)
+cutoff.biggest.diff(best_feature)
+```
+
+
+>>checking for Null Values
+```{r}
+sum(is.na(studentDataSet))
+```
+
+#4)Normalization(to scale the attributes to (0-1) for the model accuracy)
+>>Min-Max Normalization
+
+```{r}
+normalise <- function(x) {
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+studentDataSet$G1 <- normalise(studentDataSet$G1)
+studentDataSet$G2 <- normalise(studentDataSet$G2)
+studentDataSet$goout <- normalise(studentDataSet$goout)
+studentDataSet$absences <- normalise(studentDataSet$absences)
+studentDataSet$failures <- normalise(studentDataSet$failures)
+studentDataSet$Fedu <- normalise(studentDataSet$Fedu)
+studentDataSet$Medu <- normalise(studentDataSet$Medu)
+studentDataSet$health <- normalise(studentDataSet$health)
+studentDataSet$Walc <- normalise(studentDataSet$Walc)
+studentDataSet$Dalc <- normalise(studentDataSet$Dalc)
+studentDataSet$traveltime <- normalise(studentDataSet$traveltime)
+studentDataSet$studytime <- normalise(studentDataSet$studytime)
+
+```
+
+
+#5)Data Exploration using Plots:
+
+```{r}
+
+library(ggplot2)
+
+
+print(ggplot(studentDataSet, aes(x=finalGrade))+geom_bar()+facet_grid(.~sex)+ggtitle("Result of student by Gender of Applicant"))
+print(ggplot(studentDataSet,aes(x=finalGrade)) + geom_bar()+facet_grid(.~goout)+ggtitle("result of student regarding the impact of going out with friends(1-5 people)"))
+print(ggplot(studentDataSet,aes(x=finalGrade)) + geom_bar()+facet_grid(.~goout)+ggtitle("result of student regarding the impact of going out with friends(1-5 people)"))
+print(ggplot(studentDataSet,aes(x=finalGrade)) + geom_bar()+facet_grid(.~higher)+ggtitle("result of student prediction based on the higher education plans"))
+
+#The number of students who has passes/failed in the Exam.
+table(studentDataSet$finalGrade)
+```
+
+
+#6)Testing and Training Samples
+
+```{r}
+studentDataSet_train <- studentDataSet[1:295,]
+studentDataSet_test <- studentDataSet[295:395,]
+
+```
+
+#7)Model Development using Decison Tree(C50)
+
+```{r}
+library("partykit")
+# Create the tree.
+output.tree <- ctree(finalGrade ~ ., data = studentDataSet)
+plot(output.tree)
+```
+
+
+>>syntax:
+>>C5.0(train_data_set_excluding(target_variable and G3),target_variable)
+>>We are excluding G3 as well,since it is aso indirect target variable
+
+```{r}
+
+library(C50)
+studentDataSet_model <- C5.0(studentDataSet_train[-c(33,34)],studentDataSet_train$finalGrade)
+summary(studentDataSet_model)
+
+```
+
+
+>>Syntax:
+>>predict(model_outcome,train_data)
+
+```{r}
+prediction_using_test_model <- predict(studentDataSet_model,studentDataSet_test)
+table(prediction_using_test_model)
+```
+
+>>To know the Model Accuracy in terms of actual pass/fail and predicted pass/fail for Test Data
+
+```{r}
+library(gmodels)
+CrossTable(prediction_using_test_model,studentDataSet_test$finalGrade,prop.chisq = FALSE,
+           prop.c = FALSE, prop.r = FALSE, dnn = c("actual pass",
+                                                   "predicted pass"))
+```
+
+
+>>Inference:
+>>Model incorrectly predicted total 12 outcomes out of 101 observation using Test Data
+
+>>We can also use the trials parameter in C50 Algorithm for model accuracy
+```{r}
+library(C50)
+library(gmodels)
+studentDataSet_model_boost <- C5.0(studentDataSet_train[-c(33,34)],studentDataSet_train$finalGrade,trials = 10)
+prediction_using_test_model_boost <- predict(studentDataSet_model_boost,studentDataSet_test)
+CrossTable(prediction_using_test_model,studentDataSet_test$finalGrade,prop.chisq = FALSE,
+           prop.c = FALSE, prop.r = FALSE, dnn = c("actual pass",
+                                                   "predicted pass"))
+
+
+```
+
+>>Let us view the decison tree in graph
+
+```{r}
+
+library(rpart)
+library(rpart.plot)
+
+tree.model <- rpart(G3~.,studentDataSet_test)
+rpart.plot(tree.model)
+
+#Let us view the decison tree in graph excluding the top 3 features(G1,G2,G3) to understand
+tree.model_plot_extra <- rpart(data = studentDataSet_train[-c(31,32,33)], formula = finalGrade ~ .)
+tree.model_plot_extra
+rpart.plot(tree.model_plot_extra,type = 3,digits = 3,fallen.leaves = T)
+```
+
+
+#8)Model Development using CARET Package(CART):
+
+>>Training the Decision tree with criterian as information gain
+
+```{r}
+library(caret)
+trctrl <- trctrl <- trainControl(method = "repeatedcv",number = 10,repeats = 3)
+
+#Syntax: train(target_variable,data_set,...)
+
+studentDataSet_model_2<- train(studentDataSet_train[-c(33,34)],studentDataSet_train$finalGrade,trControl = trctrl,method = "rpart",parms = list(split = "information"))
+studentDataSet_model_2
+
+```
+
+```{r}
+#Predict
+prediction_using_model_2 <- predict(studentDataSet_model_2,studentDataSet_test)
+table(prediction_using_model_2)
+
+```
+
+
+Calculating Accuracy using cofusion Marix method
+```{r}
+confusionMatrix(prediction_using_model_2,studentDataSet_test$finalGrade)
+```
+
+
+>>Training the Decision Tree classifier with criterion as gini index
+
+```{r}
+student_model_gini <- train(studentDataSet_train[-c(33,34)],studentDataSet_train$finalGrade,method = "rpart",parms = list(split = "gini"),trControl=trctrl,tuneLength=10)
+
+
+
+test_pred_gini <- predict(student_model_gini, newdata = studentDataSet_test)
+summary(test_pred_gini)
+
+confusionMatrix(test_pred_gini, studentDataSet_test$finalGrade) 
+```
+
+
+#9)Comparing the result obtained from criteria as gini index and information gain for accuracy of the data_set
+
+```{r}
+result <- resamples(list(informaton_gain=studentDataSet_model_2,gini=student_model_gini))
+summary(result)
+
+bwplot(result)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
