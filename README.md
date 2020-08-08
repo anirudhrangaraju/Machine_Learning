@@ -2,7 +2,7 @@
 This Repository contains implementation of various Machine Learning Model such as 
 
 ## ML Algorithm
-* Decision Tree Model
+* `Decision Tree Model`
 * SVM Model
 * Linear Regression Model
 * KMeans Model
