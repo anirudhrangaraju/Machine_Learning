@@ -3,9 +3,9 @@ This Repository contains implementation of various Machine Learning Model such a
 
 ## ML Algorithm
 * `Decision Tree Model`
-* SVM Model
-* Linear Regression Model
-* KMeans Model
+* `SVM Model`
+* `Linear Regression Model`
+* `KMeans Model`
 
 Going forward,
 will be upgraded with other Model Developing techniques such as Logistic Regression,Naive Bayes,KNN and XGBoost.
