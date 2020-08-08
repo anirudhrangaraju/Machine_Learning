@@ -1,15 +1,11 @@
-##### Table of Contents  
-[Headers](#machinelearning)  
-
-<a name="headers"/>
-## machinelearning
 
 This Repository contains implementation of various Machine Learning Model such as 
 
-1)Decision Tree Model
-2)SVM Model
-3)Linear Regression Model
-4)KMeans Model
+## ML Algorithm
+* Decision Tree Model
+* SVM Model
+* Linear Regression Model
+* KMeans Model
 
 Going forward,
 will be upgraded with other Model Developing techniques such as Logistic Regression,Naive Bayes,KNN and XGBoost.
