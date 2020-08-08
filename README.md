@@ -1,15 +1,8 @@
 ##### Table of Contents  
-[Headers](#headers)  
-[Emphasis](#emphasis)  
-...snip...    
-
+[Headers](#machinelearning)  
 
 <a name="headers"/>
-## Headers
-
-
-
-# Machine_Learning
+## machinelearning
 
 This Repository contains implementation of various Machine Learning Model such as 
 
